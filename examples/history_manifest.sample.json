@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-05-18T12:00:00",
+  "template_project": "D:/models/unit_cell_template.cst",
+  "history_item_count": 2,
+  "candidate_count": 3,
+  "items": [
+    {
+      "history_index": 1,
+      "name": "create_patch",
+      "hidden": false,
+      "feature_type": "Brick",
+      "command_key": "text",
+      "command_text": "With Brick\n    .Reset\n    .Name \"patch\"\n    .Xrange \"-2.5\", \"2.5\"\n    .Yrange \"-2.0\", \"2.0\"\n    .Zrange \"0\", \"0.035\"\n    .Create\nEnd With\n",
+      "candidate_count": 3,
+      "candidates": [
+        {
+          "candidate_id": "h0001_v01",
+          "history_index": 1,
+          "ordinal": 1,
+          "feature_type": "Brick",
+          "history_name": "create_patch",
+          "suggested_label": "brick_01",
+          "enabled": true,
+          "raw_value": "\"-2.5\"",
+          "numeric_text": "-2.5",
+          "original_value": -2.5,
+          "span": {
+            "start": 49,
+            "end": 55
+          },
+          "line": 4,
+          "column": 13
+        },
+        {
+          "candidate_id": "h0001_v02",
+          "history_index": 1,
+          "ordinal": 2,
+          "feature_type": "Brick",
+          "history_name": "create_patch",
+          "suggested_label": "brick_02",
+          "enabled": true,
+          "raw_value": "\"2.5\"",
+          "numeric_text": "2.5",
+          "original_value": 2.5,
+          "span": {
+            "start": 57,
+            "end": 62
+          },
+          "line": 4,
+          "column": 21
+        },
+        {
+          "candidate_id": "h0001_v03",
+          "history_index": 1,
+          "ordinal": 3,
+          "feature_type": "Brick",
+          "history_name": "create_patch",
+          "suggested_label": "brick_03",
+          "enabled": false,
+          "raw_value": "\"-2.0\"",
+          "numeric_text": "-2.0",
+          "original_value": -2.0,
+          "span": {
+            "start": 77,
+            "end": 83
+          },
+          "line": 5,
+          "column": 13
+        }
+      ],
+      "raw_item_keys": [
+        "hide",
+        "name",
+        "text"
+      ]
+    },
+    {
+      "history_index": 2,
+      "name": "set_solver",
+      "hidden": false,
+      "feature_type": null,
+      "command_key": "text",
+      "command_text": "ChangeSolverType \"HF Frequency Domain\"\n",
+      "candidate_count": 0,
+      "candidates": [],
+      "raw_item_keys": [
+        "name",
+        "text"
+      ]
+    }
+  ],
+  "candidates": [
+    {
+      "candidate_id": "h0001_v01",
+      "history_index": 1,
+      "ordinal": 1,
+      "feature_type": "Brick",
+      "history_name": "create_patch",
+      "suggested_label": "brick_01",
+      "enabled": true,
+      "raw_value": "\"-2.5\"",
+      "numeric_text": "-2.5",
+      "original_value": -2.5,
+      "span": {
+        "start": 49,
+        "end": 55
+      },
+      "line": 4,
+      "column": 13
+    },
+    {
+      "candidate_id": "h0001_v02",
+      "history_index": 1,
+      "ordinal": 2,
+      "feature_type": "Brick",
+      "history_name": "create_patch",
+      "suggested_label": "brick_02",
+      "enabled": true,
+      "raw_value": "\"2.5\"",
+      "numeric_text": "2.5",
+      "original_value": 2.5,
+      "span": {
+        "start": 57,
+        "end": 62
+      },
+      "line": 4,
+      "column": 21
+    },
+    {
+      "candidate_id": "h0001_v03",
+      "history_index": 1,
+      "ordinal": 3,
+      "feature_type": "Brick",
+      "history_name": "create_patch",
+      "suggested_label": "brick_03",
+      "enabled": false,
+      "raw_value": "\"-2.0\"",
+      "numeric_text": "-2.0",
+      "original_value": -2.0,
+      "span": {
+        "start": 77,
+        "end": 83
+      },
+      "line": 5,
+      "column": 13
+    }
+  ]
+}
