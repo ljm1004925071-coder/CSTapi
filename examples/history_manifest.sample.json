@@ -1,9 +1,11 @@
 {
-  "schema_version": 1,
-  "generated_at": "2026-05-18T12:00:00",
+  "schema_version": 2,
+  "generated_at": "2026-05-18T14:00:00",
   "template_project": "D:/models/unit_cell_template.cst",
+  "parameter_source_mode": "project_parameters",
   "history_item_count": 2,
-  "candidate_count": 3,
+  "candidate_count": 5,
+  "parameter_count": 3,
   "items": [
     {
       "history_index": 1,
@@ -11,62 +13,103 @@
       "hidden": false,
       "feature_type": "Brick",
       "command_key": "text",
-      "command_text": "With Brick\n    .Reset\n    .Name \"patch\"\n    .Xrange \"-2.5\", \"2.5\"\n    .Yrange \"-2.0\", \"2.0\"\n    .Zrange \"0\", \"0.035\"\n    .Create\nEnd With\n",
-      "candidate_count": 3,
+      "command_text": "With Brick\n    .Reset\n    .Name \"patch\"\n    .Xrange \"-w_patch/2\", \"w_patch/2\"\n    .Yrange \"-l_patch/2\", \"l_patch/2\"\n    .Zrange \"0\", \"t_cu\"\n    .Create\nEnd With\n",
+      "candidate_count": 5,
       "candidates": [
         {
-          "candidate_id": "h0001_v01",
+          "candidate_id": "param_w_patch",
           "history_index": 1,
           "ordinal": 1,
           "feature_type": "Brick",
           "history_name": "create_patch",
-          "suggested_label": "brick_01",
-          "enabled": true,
-          "raw_value": "\"-2.5\"",
-          "numeric_text": "-2.5",
-          "original_value": -2.5,
+          "parameter_name": "w_patch",
+          "suggested_label": "w_patch",
+          "source": "project_parameter",
+          "raw_value": "w_patch",
+          "original_expression": "5.0",
+          "original_value": "5.0",
           "span": {
-            "start": 49,
-            "end": 55
+            "start": 50,
+            "end": 57
           },
           "line": 4,
-          "column": 13
+          "column": 14
         },
         {
-          "candidate_id": "h0001_v02",
+          "candidate_id": "param_w_patch",
           "history_index": 1,
           "ordinal": 2,
           "feature_type": "Brick",
           "history_name": "create_patch",
-          "suggested_label": "brick_02",
-          "enabled": true,
-          "raw_value": "\"2.5\"",
-          "numeric_text": "2.5",
-          "original_value": 2.5,
+          "parameter_name": "w_patch",
+          "suggested_label": "w_patch",
+          "source": "project_parameter",
+          "raw_value": "w_patch",
+          "original_expression": "5.0",
+          "original_value": "5.0",
           "span": {
-            "start": 57,
-            "end": 62
+            "start": 62,
+            "end": 69
           },
           "line": 4,
-          "column": 21
+          "column": 26
         },
         {
-          "candidate_id": "h0001_v03",
+          "candidate_id": "param_l_patch",
           "history_index": 1,
-          "ordinal": 3,
+          "ordinal": 1,
           "feature_type": "Brick",
           "history_name": "create_patch",
-          "suggested_label": "brick_03",
-          "enabled": false,
-          "raw_value": "\"-2.0\"",
-          "numeric_text": "-2.0",
-          "original_value": -2.0,
+          "parameter_name": "l_patch",
+          "suggested_label": "l_patch",
+          "source": "project_parameter",
+          "raw_value": "l_patch",
+          "original_expression": "4.0",
+          "original_value": "4.0",
           "span": {
-            "start": 77,
-            "end": 83
+            "start": 84,
+            "end": 91
           },
           "line": 5,
-          "column": 13
+          "column": 14
+        },
+        {
+          "candidate_id": "param_l_patch",
+          "history_index": 1,
+          "ordinal": 2,
+          "feature_type": "Brick",
+          "history_name": "create_patch",
+          "parameter_name": "l_patch",
+          "suggested_label": "l_patch",
+          "source": "project_parameter",
+          "raw_value": "l_patch",
+          "original_expression": "4.0",
+          "original_value": "4.0",
+          "span": {
+            "start": 96,
+            "end": 103
+          },
+          "line": 5,
+          "column": 26
+        },
+        {
+          "candidate_id": "param_t_cu",
+          "history_index": 1,
+          "ordinal": 1,
+          "feature_type": "Brick",
+          "history_name": "create_patch",
+          "parameter_name": "t_cu",
+          "suggested_label": "t_cu",
+          "source": "project_parameter",
+          "raw_value": "t_cu",
+          "original_expression": "0.035",
+          "original_value": "0.035",
+          "span": {
+            "start": 123,
+            "end": 127
+          },
+          "line": 6,
+          "column": 20
         }
       ],
       "raw_item_keys": [
@@ -90,60 +133,86 @@
       ]
     }
   ],
+  "parameters": [
+    {
+      "candidate_id": "param_w_patch",
+      "parameter_name": "w_patch",
+      "suggested_label": "w_patch",
+      "enabled": true,
+      "source": "project_parameter",
+      "original_value": "5.0",
+      "original_expression": "5.0",
+      "usage_count": 2,
+      "history_indexes": [
+        1
+      ]
+    },
+    {
+      "candidate_id": "param_l_patch",
+      "parameter_name": "l_patch",
+      "suggested_label": "l_patch",
+      "enabled": true,
+      "source": "project_parameter",
+      "original_value": "4.0",
+      "original_expression": "4.0",
+      "usage_count": 2,
+      "history_indexes": [
+        1
+      ]
+    },
+    {
+      "candidate_id": "param_t_cu",
+      "parameter_name": "t_cu",
+      "suggested_label": "t_cu",
+      "enabled": false,
+      "source": "project_parameter",
+      "original_value": "0.035",
+      "original_expression": "0.035",
+      "usage_count": 1,
+      "history_indexes": [
+        1
+      ]
+    }
+  ],
   "candidates": [
     {
-      "candidate_id": "h0001_v01",
-      "history_index": 1,
-      "ordinal": 1,
-      "feature_type": "Brick",
-      "history_name": "create_patch",
-      "suggested_label": "brick_01",
+      "candidate_id": "param_w_patch",
+      "parameter_name": "w_patch",
+      "suggested_label": "w_patch",
       "enabled": true,
-      "raw_value": "\"-2.5\"",
-      "numeric_text": "-2.5",
-      "original_value": -2.5,
-      "span": {
-        "start": 49,
-        "end": 55
-      },
-      "line": 4,
-      "column": 13
+      "source": "project_parameter",
+      "original_value": "5.0",
+      "original_expression": "5.0",
+      "usage_count": 2,
+      "history_indexes": [
+        1
+      ]
     },
     {
-      "candidate_id": "h0001_v02",
-      "history_index": 1,
-      "ordinal": 2,
-      "feature_type": "Brick",
-      "history_name": "create_patch",
-      "suggested_label": "brick_02",
+      "candidate_id": "param_l_patch",
+      "parameter_name": "l_patch",
+      "suggested_label": "l_patch",
       "enabled": true,
-      "raw_value": "\"2.5\"",
-      "numeric_text": "2.5",
-      "original_value": 2.5,
-      "span": {
-        "start": 57,
-        "end": 62
-      },
-      "line": 4,
-      "column": 21
+      "source": "project_parameter",
+      "original_value": "4.0",
+      "original_expression": "4.0",
+      "usage_count": 2,
+      "history_indexes": [
+        1
+      ]
     },
     {
-      "candidate_id": "h0001_v03",
-      "history_index": 1,
-      "ordinal": 3,
-      "feature_type": "Brick",
-      "history_name": "create_patch",
-      "suggested_label": "brick_03",
+      "candidate_id": "param_t_cu",
+      "parameter_name": "t_cu",
+      "suggested_label": "t_cu",
       "enabled": false,
-      "raw_value": "\"-2.0\"",
-      "numeric_text": "-2.0",
-      "original_value": -2.0,
-      "span": {
-        "start": 77,
-        "end": 83
-      },
-      "line": 5,
-      "column": 13
+      "source": "project_parameter",
+      "original_value": "0.035",
+      "original_expression": "0.035",
+      "usage_count": 1,
+      "history_indexes": [
+        1
+      ]
     }
   ]
 }

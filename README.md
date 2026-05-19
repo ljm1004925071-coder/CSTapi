@@ -80,6 +80,53 @@ powershell -ExecutionPolicy Bypass -File .\scripts\run-cst-variant.ps1 inspect-h
 
 建议只开启你明确要控制的尺寸，不要一次性把所有数值都打开。
 
+## 也可以直接当 Python 函数调用
+
+如果你不想走命令行，也可以在自己的 Python 脚本里直接调用：
+
+```python
+from cst_variant_tool import export_history_manifest
+
+manifest = export_history_manifest(
+    project_path=r"D:\path\template.cst",
+    output_path=r"D:\path\history_manifest.json",
+    connect_to_any=True,
+    options=["-m", "-i"],
+)
+
+print(manifest["history_item_count"])
+print(manifest["candidate_count"])
+```
+
+最稳的运行方式有两个：
+
+1. 先切到仓库根目录 `D:\CSTapi` 再运行你的 Python 脚本
+2. 或者先把仓库根目录加入 `sys.path`
+
+例如：
+
+```python
+import sys
+sys.path.append(r"D:\CSTapi")
+
+from cst_variant_tool import export_history_manifest
+```
+
+说明：
+
+- `project_path`
+  - 模板 `.cst` 工程路径
+
+- `output_path`
+  - 如果提供，就会把清单写入 JSON 文件
+  - 如果设为 `None`，则只返回 Python 字典对象
+
+- `connect_to_any`
+  - `True` 表示优先连接已有 CST 会话
+
+- `options`
+  - 传给 CST 启动参数，例如 `["-m", "-i"]`
+
 ### 3. 编写变体配置
 
 准备 `variant_config.json`，定义：
