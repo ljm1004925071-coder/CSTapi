@@ -1,6 +1,6 @@
 ---
 name: cst-python-automation
-description: Use when an agent needs to control CST Studio Suite from natural-language requests, including connecting to or launching CST, opening or reusing .cst projects, editing parameters, adding/removing geometry, configuring simulations, running solvers, reading S-parameters/farfields/efficiency/logs, optimization loops, and machine-learning or deep-learning surrogate workflows.
+description: Use when an agent needs to control CST Studio Suite from natural-language requests, including connecting to or launching CST, opening or reusing .cst projects, editing parameters, complex antenna structure evolution, adding/removing geometry, configuring simulations, running solvers, reading S-parameters/farfields/efficiency/logs, optimization loops, and machine-learning or deep-learning surrogate workflows.
 ---
 
 # CST Natural-Language Automation Skill
@@ -18,7 +18,8 @@ Consult official references before generating CST commands.
 3. 3D modeling and History/VBA commands: `official-docs/vba-3d/`.
 4. Design Studio / schematic commands: `official-docs/vba-des/`.
 5. Launch, OLE automation, and environment variables: `official-docs/advanced/`.
-6. If copied docs are insufficient, use `official-docs/source-index.md` to inspect the full CST installation under `D:\CST`.
+6. Complex antenna structure evolution: read `domain-guides/design-evolution.en.md`, `geometry-mutation.en.md`, `result-diagnosis.en.md`, and `optimization-ml-data.en.md` as needed.
+7. If copied docs are insufficient, use `official-docs/source-index.md` to inspect the full CST installation under `D:\CST`.
 
 Core split:
 
@@ -32,13 +33,16 @@ Core split:
 Normalize the user request into a task spec first:
 
 ```yaml
-task_type: connect | parameter_edit | geometry_edit | build_model | simulate | read_results | optimize | ml_loop
+task_type: connect | parameter_edit | geometry_edit | build_model | simulate | read_results | diagnose | design_evolution | optimize | ml_loop
 project_path: path-or-null
 save_policy: no_save | save_copy | save_original
 parameters: name/value pairs
 geometry_ops: add/remove/replace operations
 solver: time_domain | frequency_domain | existing
 metrics: S11, S21, bandwidth, gain, efficiency, farfield, logs
+design_version: design_id and parent_design_id when iterating structures
+data_version: dataset version when trials are recorded
+surrogate_version: ML/DL model version when surrogate models are used
 budget: simulation count or time limit
 risk_level: low | medium | high
 outputs: expected project, dataset, metrics, plots, logs
@@ -53,8 +57,11 @@ Discover repo and project facts before asking the user. Ask only for risky prefe
 - Build a new model: create MWS, store parameters, add setup, geometry, ports, solver settings, rebuild, save to a new path.
 - Add/remove geometry: prefer a copied project and apply History/VBA operations there.
 - Read results: prefer offline `cst.results.ProjectFile`; use live CST only when unsaved or real-time data is required.
+- Complex antenna design: do not use simple antenna-type templates first; inspect the project and results, then follow `domain-guides/design-evolution.en.md` for structure-version evolution.
+- Complex geometry edits: follow `domain-guides/geometry-mutation.en.md` for naming, backups, Boolean operations, mutation records, and rollback.
+- Result-driven next steps: follow `domain-guides/result-diagnosis.en.md` to turn metric evidence into the next structural hypothesis.
 - Run simulation: copy to a job directory, apply parameters, rebuild, run solver, read logs and metrics.
-- Optimize or use ML: treat CST as the expensive ground-truth evaluator; record every trial with parameters, metrics, status, logs, and project path.
+- Optimize or use ML: treat CST as the expensive ground-truth evaluator; follow `domain-guides/optimization-ml-data.en.md` to record trials, dataset versions, surrogate versions, training configs, and CST validation results.
 
 ## 5. Core Workflows
 
@@ -94,6 +101,17 @@ Discover repo and project facts before asking the user. Ask only for risky prefe
 3. Match `S-Parameters`, `Farfields`, `Efficiencies`, and other requested items.
 4. Use `get_result_item(treepath).get_xdata()` and `get_ydata()` for 1D curves.
 5. Report the metric source: live API, `cst.results`, exported text, or parsed logs.
+
+### Complex Antenna Structure Evolution
+
+1. Inspect current project structure, parameters, ports, boundaries, monitors, and existing results.
+2. Create `D0000_baseline`; record baseline project, structure summary, and metrics.
+3. Diagnose the main bottleneck from S-parameters, efficiency, gain, pattern, polarization, and logs.
+4. Generate the smallest structural mutation hypothesis, such as adding a slot, editing the feed, adding a parasitic element, editing ground, adding a short, or tuning array spacing.
+5. Apply the mutation in a copy with History/VBA; include `mutation_id` and `parent_design_id -> design_id` in the caption.
+6. Rebuild, simulate, or read results.
+7. Write `design.json`, `metrics.json`, and `trials.jsonl`.
+8. Decide whether to accept, reject, roll back, refine, optimize, or train a surrogate.
 
 ## 6. Modeling And Simulation Command Pattern
 
@@ -185,7 +203,10 @@ except Exception:
 - Surrogate modeling: generate a CST dataset and train a model to predict S-parameters, bandwidth, gain, efficiency, or farfield scores.
 - Active learning: let the surrogate propose candidates, validate valuable samples in CST, append data, and retrain.
 - Inverse design: optimize on the surrogate first, then validate top-k designs in CST.
-- Write every trial to `trials.jsonl` with parameters, metrics, status, errors, project path, and log path.
+- Write every trial to `trials.jsonl` with `trial_id`, `design_id`, `parent_design_id`, parameters, structure operations, metrics, status, errors, project path, and log path.
+- Write `dataset_summary.json` for every dataset version, including source trials, filters, features, targets, units, split seed, and sample counts.
+- Write `model_card.json` for every surrogate version, including `surrogate_version`, `dataset_version`, model type, training config, weight path, validation metrics, and applicability limits.
+- Do not save only model weights; without data version and training config, CST validation cannot be reproduced.
 
 ## 8. Safety Rules
 
@@ -195,6 +216,8 @@ except Exception:
 - Do not infer CST is controllable from backend processes such as `cstd`; check `running_design_environments()`.
 - Do not confuse "read existing results" with "run a new simulation".
 - Do not hard-code result tree paths before discovering available tree items.
+- Do not reduce complex antenna design to fixed antenna-type templates; use structure evolution and result diagnosis loops.
+- Do not claim optimization is complete without `design_id`, `trial_id`, metric sources, and version records.
 
 ## 9. Output Contract
 
@@ -203,11 +226,13 @@ Every completed task should report:
 ```yaml
 project_path: used or generated CST project
 save_policy: no_save | save_copy | save_original
+design_id: current structure version
+parent_design_id: previous structure version or null
 operations: list of parameter/modeling/simulation steps
 metrics: extracted values with source
 logs: Model.log/output.json/outputDS.json paths
 artifacts: generated files, datasets, plots, manifests
+versions: dataset_version, surrogate_version, CST project copy version
 warnings: assumptions, skipped steps, risks
 errors: failures and recovery attempts
 ```
-
