@@ -1,4 +1,6 @@
+Thumbs.db
+Desktop.ini
+*.log
 __pycache__/
-*.pyc
-output/
-cst_bg.log
+.pytest_cache/
+
