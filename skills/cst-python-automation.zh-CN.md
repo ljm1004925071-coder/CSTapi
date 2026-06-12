@@ -1,238 +1,104 @@
 ---
-name: cst-python-automation-zh-cn
-description: 当用户希望模型通过自然语言控制 CST Studio Suite 时使用，包括连接或启动 CST、打开或复用 .cst 工程、修改参数、复杂天线结构演化、建模增删结构、设置仿真、运行求解器、读取 S 参数/远场/效率/日志、做优化闭环，以及联合机器学习或深度学习代理模型。
+name: cst-python-automation
+description: 当用户询问 CST Studio Suite、CST-MWS、天线或 RF 仿真、打开或启动 .cst 工程、修改参数或几何、定义端口或边界、运行求解器、读取 S11/S21/远场/增益/效率/日志、使用 CST 安装宏示例、或构建优化/机器学习驱动的 CST 工作流时使用。
 ---
 
-# CST 自然语言自动化 Skill
+# CST Python 自动化 Skill
 
-## 1. 目标
+## 核心分工
 
-把用户的自然语言需求转换成安全、可验证、可复现的 CST Python 自动化流程。模型不能只给概念建议，要明确项目路径、操作步骤、保存策略、结果读取方式、日志和输出产物。
+这个 skill 负责模型行为规则：如何理解自然语言请求、如何保证安全、如何查官方资料、如何记录设计版本、如何汇报结果。
 
-## 2. 官方资料优先级
+`D:\CSTapi\mcp\` 负责标准化工具调用：搜索宏库、读取官方文档、提取 History/VBA 片段、创建设计记录、以及通过 CST Python helper 执行受控动作。
 
-生成 CST 命令前先查官方资料，不要硬猜。
+优先使用 MCP 工具完成可标准化动作；当 MCP 工具不够时，再按本 skill 的规则直接查资料和编写脚本。
 
-1. Python API：`official-docs/python/`，重点看 `main.html`、`source/cst.interface.html`、`source/cst.results.html`。
-2. Python 包源码：`official-docs/python_cst_libraries/cst/`，重点看 `interface/studio.py`、`results.py`。
-3. 3D 建模和 History/VBA 命令：`official-docs/vba-3d/`。
-4. Design Studio / schematic 命令：`official-docs/vba-des/`。
-5. 启动、OLE、环境变量：`official-docs/advanced/`。
-6. 复杂天线结构演化：按需查 `domain-guides/design-evolution.zh-CN.md`、`geometry-mutation.zh-CN.md`、`result-diagnosis.zh-CN.md`、`optimization-ml-data.zh-CN.md`。
-7. 如果仓库内资料不足，按 `official-docs/source-index.md` 去 `D:\CST` 安装目录查完整官方文档。
+## 适用范围
 
-核心分工：
+用于以下 CST Studio Suite 场景：
 
-- `cst.interface`：连接 CST、创建/打开工程、复用工程、运行求解器、访问 3D/Schematic 应用。
-- `cst.results`：离线读取已保存 `.cst` 的 0D/1D/2D 结果，不需要启动 CST。
-- VBA/History：具体几何建模、端口、材料、边界、网格、监视器、求解器设置。
-- `model3d.add_to_history(header, vba_code)`：Python 驱动 CST 建模的主要桥梁。
+- 启动 CST、连接正在运行的会话、复用已打开工程、或打开 `.cst` 工程
+- 修改参数、材料、几何、端口、边界、监视器、网格、求解器设置
+- 从安装宏中学习 `VBA/History/add_to_history` 命令模式
+- 读取 `S11`、`S21`、远场、增益、效率、电流、结果树、日志
+- 重建、求解、后处理、导出结果
+- 迭代复杂天线或 RF 结构，记录设计谱系
+- 运行优化闭环、参数扫描、代理模型或深度学习数据闭环
 
-## 3. 任务解析协议
+## 触发词
 
-收到用户描述后先整理成任务规格：
+用户提到以下内容时，优先使用此 skill：
 
-```yaml
-task_type: connect | parameter_edit | geometry_edit | build_model | simulate | read_results | diagnose | design_evolution | optimize | ml_loop
-project_path: path-or-null
-save_policy: no_save | save_copy | save_original
-parameters: name/value pairs
-geometry_ops: add/remove/replace operations
-solver: time_domain | frequency_domain | existing
-metrics: S11, S21, bandwidth, gain, efficiency, farfield, logs
-design_version: design_id and parent_design_id when iterating structures
-data_version: dataset version when trials are recorded
-surrogate_version: ML/DL model version when surrogate models are used
-budget: simulation count or time limit
-risk_level: low | medium | high
-outputs: expected project, dataset, metrics, plots, logs
-```
+- `CST`、`CST Studio Suite`、`CST-MWS`
+- `antenna`、`RF`、`microwave`、`S11`、`farfield`、`gain`、`efficiency`
+- `parameter sweep`、`optimization`、`surrogate`、`ML`、`deep learning`
+- `macro`、`VBA`、`History`、`RunScript`、`add_to_history`
+- `open .cst`、`launch CST`、`connect CST`、`modify geometry`
 
-可从仓库或 CST 工程发现的信息先自己查。只有保存原工程、删除结构、运行长仿真、覆盖 GitHub 等高风险偏好才需要明确用户意图。
+## 工具优先级
 
-## 4. 执行决策树
+1. 如已安装 `cstapi-mcp`，优先用 MCP 工具执行标准动作。
+2. 查宏库用 `docs.search_macros`、`docs.read_macro`、`history.extract_pattern`。
+3. 查官方文档用 `docs.search_official_docs`、`docs.read_official_doc`。
+4. 建立设计记录用 `records.create_variant`、`records.append_operation`。
+5. 受控启动或实时改参用 `cst.closed_start`、`cst.live_modify_parameter`；默认 `execute=false`，只有用户意图明确时才执行。
+6. 若 MCP 不可用，直接读取仓库内资料并编写 Python/VBA/History 脚本。
 
-- 用户要连接或测试 CST：使用 `DesignEnvironment.connect_to_any_or_new()`；如果要求必须复用已打开工程，则无可见 Design Environment 时直接失败。
-- 用户要修改参数：读取原值，写入新值，rebuild；默认不保存原工程。
-- 用户要新建模型：新建 MWS，写参数，添加 setup、几何、端口、求解器，rebuild，保存到新路径。
-- 用户要增删结构：优先复制工程，在副本中用 History/VBA 增删改。
-- 用户要读取结果：优先用 `cst.results.ProjectFile` 离线读取；若工程未保存或需要实时结果，再用 live CST API。
-- 用户要做复杂天线设计：不要套简单天线类型模板；先读工程和结果，再按 `domain-guides/design-evolution.zh-CN.md` 做结构版本演化。
-- 用户要增删改复杂结构：按 `domain-guides/geometry-mutation.zh-CN.md` 命名、备份、布尔操作、记录 mutation 和回滚。
-- 用户要根据结果决定下一步：按 `domain-guides/result-diagnosis.zh-CN.md` 把指标证据转为下一轮结构变异假设。
-- 用户要运行仿真：复制工程到 job 目录，应用参数，rebuild，run solver，读取日志和指标。
-- 用户要优化或深度学习：CST 作为昂贵真实评估器；按 `domain-guides/optimization-ml-data.zh-CN.md` 记录 trial、数据集版本、代理模型版本、训练配置和 CST 验证结果。
+## 资料优先级
 
-## 5. 核心工作流
+按需读取这些资料：
 
-### 新建模型
+1. `D:\CSTapi\mcp\README.md`
+2. `D:\CSTapi\official-docs\python\`
+3. `D:\CSTapi\official-docs\python_cst_libraries\cst\`
+4. `D:\CSTapi\official-docs\vba-3d\`
+5. `D:\CSTapi\official-docs\vba-des\`
+6. `D:\CSTapi\official-docs\advanced\`
+7. `D:\CSTapi\macro-library\macro-inventory.csv`
+8. `D:\CSTapi\macro-library\cst-macro-usage.zh-CN.md`
+9. `D:\CSTapi\macro-library\macro-catalog.zh-CN.md`
+10. `D:\CSTapi\domain-guides\design-evolution.zh-CN.md`
+11. `D:\CSTapi\domain-guides\geometry-mutation.zh-CN.md`
+12. `D:\CSTapi\domain-guides\result-diagnosis.zh-CN.md`
+13. `D:\CSTapi\domain-guides\optimization-ml-data.zh-CN.md`
 
-1. 提取频率、尺寸、材料、端口、边界、目标指标。
-2. 建参数表，尺寸尽量参数化。
-3. `DesignEnvironment.new()` 或 `connect_to_any_or_new()` 后 `new_mws()`。
-4. `StoreParameterWithDescription` 或 `StoreParameter` 写参数。
-5. `add_to_history()` 添加单位、频率范围、背景、边界、网格、监视器。
-6. 添加组件、材料、几何体、端口、集总元件。
-7. 添加求解器设置。
-8. `full_history_rebuild()`，失败时尝试 `RebuildOnParametricChange(True, False)`。
-9. 保存到新 `.cst` 路径。
+## 使用规则
 
-### 修改已有工程
+1. 先检查当前工程、参数、结果树或已有记录，再提出修改。
+2. 优先依据官方文档、安装宏、仓库示例，不要凭空猜 CST API。
+3. 在线会话用 `cst.interface`，离线读取保存结果用 `cst.results`。
+4. 几何、端口、边界、网格、求解器设置优先通过 `model3d.add_to_history()` 注入。
+5. 不熟悉的 CST VBA/History 命令先查宏库，提取最小可控片段，不把完整交互式宏当黑盒批量运行。
+6. 默认不保存原工程；破坏性修改、删结构、长仿真、优化循环先复制工程或创建 job copy。
+7. 复杂结构演化必须记录 `design_id`、`parent_design_id`、操作、指标、日志、数据版本、代理模型版本。
+8. 只使用已被官方文档、安装宏、或本仓库代码确认的 API、方法名和参数名。
+9. API 细节不确定时先核实，不用猜测补全。
 
-1. 连接 CST 并查 `list_open_projects()`。
-2. 若用户要求实时修改已打开工程，必须用 `get_open_project()` 复用。
-3. 写参数前读取原值。
-4. 写入新值并 rebuild。
-5. 根据保存策略决定恢复、不保存、另存副本或保存原工程。
+## 决策流程
 
-### 运行仿真
+- 连接/打开 CST：先列出现有会话和已打开工程；需要冷启动时用 MCP 的 `cst.closed_start` 或等价脚本。
+- 修改参数：先读原值，再写入测试值，rebuild，必要时暂停观察，默认恢复且不保存。
+- 修改结构：先建立设计记录，说明变更假设，再用最小 History 片段修改几何。
+- 增减结构：明确新增/删除对象、材料、坐标系、布尔操作和可回滚策略。
+- 读取结果：先发现结果树路径，再读 S 参数、远场、效率、增益、日志等指标。
+- 优化/深度学习：把 CST 当昂贵真实求解器，每次 trial 都记录输入、输出、工程副本、日志和数据版本。
 
-1. 复制 `.cst` 和同名工程文件夹到 job 目录。
-2. 删除副本中的 `.lok` 锁文件。
-3. 打开副本工程，应用参数，rebuild。
-4. 用 `model3d.run_solver()`，失败时回退 `RunSolver()`。
-5. 检查 `Result/Model.log`、`output.json`、`outputDS.json`。
-6. 读取指标并写入 `metrics.json` 或 `trials.jsonl`。
+## 输出契约
 
-### 读取结果
-
-1. 先用 `ProjectFile(path, allow_interactive=False)` 读取已保存工程。
-2. 用 `get_3d().get_tree_items()` 发现结果树，不要盲猜路径。
-3. 匹配 `S-Parameters`、`Farfields`、`Efficiencies` 等树项。
-4. 用 `get_result_item(treepath).get_xdata()` 和 `get_ydata()` 读 1D 曲线。
-5. 报告指标来源：live API、`cst.results`、导出文本或日志解析。
-
-### 复杂天线结构演化
-
-1. 读取当前工程结构、参数、端口、边界、监视器和已有结果。
-2. 建立 `D0000_baseline`，记录基线工程、结构摘要和指标。
-3. 根据 S 参数、效率、增益、方向图、极化、日志诊断主要瓶颈。
-4. 生成最小结构变异假设，例如加槽、改馈电、加寄生、改地板、加短路、调阵列间距。
-5. 在副本中用 History/VBA 执行变异，caption 包含 `mutation_id` 和 `parent_design_id -> design_id`。
-6. Rebuild、仿真或读取结果。
-7. 写入 `design.json`、`metrics.json`、`trials.jsonl`。
-8. 决定接受、拒绝、回滚、继续微调、进入优化或训练代理模型。
-
-## 6. 建模和仿真指令模式
-
-History helper：
-
-```python
-def add_history(project, caption, lines):
-    project.model3d.add_to_history(caption, "\n".join(lines) + "\n")
-```
-
-最小 setup：
-
-```python
-add_history(project, "setup units boundary monitor", [
-    "With Units",
-    '    .SetUnit "Length", "mm"',
-    '    .SetUnit "Frequency", "GHz"',
-    "End With",
-    'Solver.FrequencyRange "fmin", "fmax"',
-    "With Boundary",
-    '    .Xmin "expanded open"',
-    '    .Xmax "expanded open"',
-    '    .Ymin "expanded open"',
-    '    .Ymax "expanded open"',
-    '    .Zmin "expanded open"',
-    '    .Zmax "expanded open"',
-    "End With",
-    "With Monitor",
-    "    .Reset",
-    '    .Name "farfield (f=fmon)"',
-    '    .Domain "Frequency"',
-    '    .FieldType "Farfield"',
-    '    .MonitorValue "fmon"',
-    "    .Create",
-    "End With",
-])
-```
-
-Brick 示例：
-
-```python
-add_history(project, "create patch", [
-    "With Brick",
-    "    .Reset",
-    '    .Name "patch"',
-    '    .Component "metal"',
-    '    .Material "PEC"',
-    '    .Xrange "-patch_w/2", "patch_w/2"',
-    '    .Yrange "-patch_l/2", "patch_l/2"',
-    '    .Zrange "0", "metal_t"',
-    "    .Create",
-    "End With",
-])
-```
-
-Discrete port 示例：
-
-```python
-add_history(project, "define port 1", [
-    "With DiscretePort",
-    "    .Reset",
-    '    .PortNumber "1"',
-    '    .Type "SParameter"',
-    '    .Impedance "50.0"',
-    '    .SetP1 "False", "feed_x", "-feed_gap/2", "0"',
-    '    .SetP2 "False", "feed_x", "feed_gap/2", "0"',
-    "    .Create",
-    "End With",
-])
-```
-
-运行求解器：
-
-```python
-try:
-    project.model3d.full_history_rebuild()
-except Exception:
-    project.model3d.RebuildOnParametricChange(True, False)
-
-try:
-    project.model3d.run_solver()
-except Exception:
-    project.model3d.RunSolver()
-```
-
-## 7. 优化和深度学习闭环
-
-- 参数扫描/优化：定义变量、边界、目标、约束和预算；每个候选复制工程仿真；缓存已评估参数。
-- 代理模型：用 CST 生成数据集，训练模型预测 S 参数、带宽、增益、效率或远场得分。
-- 主动学习：代理模型提出候选，CST 验证高价值样本，追加数据后重训。
-- 逆向设计：先在代理模型上优化，再用 CST 验证 top-k。
-- 每次 trial 写入 `trials.jsonl`，包含 `trial_id`、`design_id`、`parent_design_id`、参数、结构操作、指标、状态、错误、工程路径、日志路径。
-- 每个数据集版本写 `dataset_summary.json`，记录来源 trial、过滤规则、特征、目标、单位、划分随机种子和样本数量。
-- 每个代理模型版本写 `model_card.json`，记录 `surrogate_version`、`dataset_version`、模型类型、训练配置、权重路径、验证指标和适用范围。
-- 不要只保存模型权重；必须保存数据版本和训练配置，否则后续 CST 验证无法复现。
-
-## 8. 安全规则
-
-- 默认不保存用户原工程。
-- 删除结构、覆盖工程、长仿真、批量优化必须使用副本或得到明确要求。
-- `pdfsrc`、junction、外部链接目录不得递归删除。
-- 不要因为看到 `cstd` 等后台进程就认为 CST 前端可连接，要查 `running_design_environments()`。
-- 不要把“读取已有结果”误解为“重新运行仿真”。
-- 不要硬编码结果树路径，先发现再读取。
-- 不要把复杂天线设计简化成固定天线类型模板；实际设计应按结构演化和结果诊断闭环推进。
-- 不要在没有 `design_id`、`trial_id`、指标来源和版本记录时声称完成优化。
-
-## 9. 输出契约
-
-每次完成任务后输出：
+任务结束时尽量报告：
 
 ```yaml
-project_path: used or generated CST project
+project_path: 使用或生成的 CST 工程
 save_policy: no_save | save_copy | save_original
-design_id: current structure version
-parent_design_id: previous structure version or null
-operations: list of parameter/modeling/simulation steps
-metrics: extracted values with source
-logs: Model.log/output.json/outputDS.json paths
-artifacts: generated files, datasets, plots, manifests
-versions: dataset_version, surrogate_version, CST project copy version
-warnings: assumptions, skipped steps, risks
-errors: failures and recovery attempts
+design_id: 当前结构版本
+parent_design_id: 上一结构版本或 null
+mcp_tools: 本次调用的 MCP 工具
+operations: 参数/建模/仿真/结果读取步骤
+metrics: 提取指标及来源路径
+logs: Model.log/output.json/outputDS.json 路径
+artifacts: 生成文件、数据集、图、清单、模型卡
+versions: dataset_version、surrogate_version、CST project copy version
+source_macros: 参考或改写的 CST 安装宏路径
+warnings: 假设、跳过项、风险
+errors: 失败与恢复尝试
 ```

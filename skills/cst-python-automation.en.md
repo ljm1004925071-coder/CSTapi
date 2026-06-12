@@ -1,238 +1,104 @@
 ---
 name: cst-python-automation
-description: Use when an agent needs to control CST Studio Suite from natural-language requests, including connecting to or launching CST, opening or reusing .cst projects, editing parameters, complex antenna structure evolution, adding/removing geometry, configuring simulations, running solvers, reading S-parameters/farfields/efficiency/logs, optimization loops, and machine-learning or deep-learning surrogate workflows.
+description: Use when a user asks about CST Studio Suite, CST-MWS, antenna or RF simulation, opening or launching a .cst project, editing parameters or geometry, defining ports or boundaries, running solvers, reading S11/S21/farfield/gain/efficiency/logs, using CST installed macro examples, or building an optimization or ML-driven CST workflow.
 ---
 
-# CST Natural-Language Automation Skill
+# CST Python Automation Skill
 
-## 1. Purpose
+## Core Split
 
-Translate a user's high-level CST request into a safe, verifiable, reproducible Python automation workflow. Do not stop at conceptual advice: identify project paths, operations, save policy, result-reading method, logs, and artifacts.
+This skill governs model behavior: how to interpret natural-language CST requests, stay safe, consult official references, record design versions, and report results.
 
-## 2. Official Source Priority
+`D:\CSTapi\mcp\` provides the standardized tool layer: macro search, official-document reads, History/VBA pattern extraction, design manifests, and conservative CST Python helper execution.
 
-Consult official references before generating CST commands.
+Prefer MCP tools for standardized actions. If MCP coverage is insufficient, fall back to this skill's rules and inspect the repository references directly.
 
-1. Python API: `official-docs/python/`, especially `main.html`, `source/cst.interface.html`, and `source/cst.results.html`.
-2. Python package source: `official-docs/python_cst_libraries/cst/`, especially `interface/studio.py` and `results.py`.
-3. 3D modeling and History/VBA commands: `official-docs/vba-3d/`.
-4. Design Studio / schematic commands: `official-docs/vba-des/`.
-5. Launch, OLE automation, and environment variables: `official-docs/advanced/`.
-6. Complex antenna structure evolution: read `domain-guides/design-evolution.en.md`, `geometry-mutation.en.md`, `result-diagnosis.en.md`, and `optimization-ml-data.en.md` as needed.
-7. If copied docs are insufficient, use `official-docs/source-index.md` to inspect the full CST installation under `D:\CST`.
+## Scope
 
-Core split:
+Use this skill for CST Studio Suite workflows involving:
 
-- `cst.interface`: connect to CST, create/open/reuse projects, run solvers, access 3D/Schematic applications.
-- `cst.results`: read 0D/1D/2D results from saved `.cst` files without launching CST.
-- VBA/History: build geometry, ports, materials, boundaries, mesh, monitors, and solver settings.
-- `model3d.add_to_history(header, vba_code)`: the main bridge for Python-driven CST modeling.
+- Launching CST, connecting to a running session, reusing an open project, or opening a `.cst` project
+- Editing parameters, materials, geometry, ports, boundaries, monitors, mesh, or solver settings
+- Learning `VBA/History/add_to_history` command patterns from installed CST macros
+- Reading `S11`, `S21`, farfield, gain, efficiency, currents, result trees, and logs
+- Rebuilding, solving, post-processing, or exporting results
+- Iterating complex antenna or RF structures with versioned design records
+- Running optimization loops, parameter sweeps, surrogate modeling, or ML data workflows
 
-## 3. Intent Parsing Protocol
+## Trigger Style
 
-Normalize the user request into a task spec first:
+Prefer this skill when the user mentions:
 
-```yaml
-task_type: connect | parameter_edit | geometry_edit | build_model | simulate | read_results | diagnose | design_evolution | optimize | ml_loop
-project_path: path-or-null
-save_policy: no_save | save_copy | save_original
-parameters: name/value pairs
-geometry_ops: add/remove/replace operations
-solver: time_domain | frequency_domain | existing
-metrics: S11, S21, bandwidth, gain, efficiency, farfield, logs
-design_version: design_id and parent_design_id when iterating structures
-data_version: dataset version when trials are recorded
-surrogate_version: ML/DL model version when surrogate models are used
-budget: simulation count or time limit
-risk_level: low | medium | high
-outputs: expected project, dataset, metrics, plots, logs
-```
+- `CST`, `CST Studio Suite`, `CST-MWS`
+- `antenna`, `RF`, `microwave`, `S11`, `farfield`, `gain`, `efficiency`
+- `parameter sweep`, `optimization`, `surrogate`, `ML`, `deep learning`
+- `macro`, `VBA`, `History`, `RunScript`, `add_to_history`
+- `open .cst`, `launch CST`, `connect CST`, `modify geometry`
 
-Discover repo and project facts before asking the user. Ask only for risky preferences such as saving originals, deleting geometry, running long simulations, or overwriting GitHub.
+## Tool Priority
 
-## 4. Execution Decision Tree
+1. If `cstapi-mcp` is installed, use MCP tools for standardized actions first.
+2. Use `docs.search_macros`, `docs.read_macro`, and `history.extract_pattern` for macro-library work.
+3. Use `docs.search_official_docs` and `docs.read_official_doc` for official references.
+4. Use `records.create_variant` and `records.append_operation` for design records.
+5. Use `cst.closed_start` and `cst.live_modify_parameter` for controlled CST execution; these default to `execute=false` and should only execute when user intent is clear.
+6. If MCP is unavailable, read repository references directly and write Python/VBA/History scripts under the same safety rules.
 
-- Connect/test CST: use `DesignEnvironment.connect_to_any_or_new()`; if the user requires an already-open project, fail when no visible Design Environment exists.
-- Edit parameters: read originals, write new values, rebuild; default to not saving the original project.
-- Build a new model: create MWS, store parameters, add setup, geometry, ports, solver settings, rebuild, save to a new path.
-- Add/remove geometry: prefer a copied project and apply History/VBA operations there.
-- Read results: prefer offline `cst.results.ProjectFile`; use live CST only when unsaved or real-time data is required.
-- Complex antenna design: do not use simple antenna-type templates first; inspect the project and results, then follow `domain-guides/design-evolution.en.md` for structure-version evolution.
-- Complex geometry edits: follow `domain-guides/geometry-mutation.en.md` for naming, backups, Boolean operations, mutation records, and rollback.
-- Result-driven next steps: follow `domain-guides/result-diagnosis.en.md` to turn metric evidence into the next structural hypothesis.
-- Run simulation: copy to a job directory, apply parameters, rebuild, run solver, read logs and metrics.
-- Optimize or use ML: treat CST as the expensive ground-truth evaluator; follow `domain-guides/optimization-ml-data.en.md` to record trials, dataset versions, surrogate versions, training configs, and CST validation results.
+## Reference Priority
 
-## 5. Core Workflows
+Read these sources as needed:
 
-### Build A New Model
+1. `D:\CSTapi\mcp\README.md`
+2. `D:\CSTapi\official-docs\python\`
+3. `D:\CSTapi\official-docs\python_cst_libraries\cst\`
+4. `D:\CSTapi\official-docs\vba-3d\`
+5. `D:\CSTapi\official-docs\vba-des\`
+6. `D:\CSTapi\official-docs\advanced\`
+7. `D:\CSTapi\macro-library\macro-inventory.csv`
+8. `D:\CSTapi\macro-library\cst-macro-usage.en.md`
+9. `D:\CSTapi\macro-library\macro-catalog.en.md`
+10. `D:\CSTapi\domain-guides\design-evolution.en.md`
+11. `D:\CSTapi\domain-guides\geometry-mutation.en.md`
+12. `D:\CSTapi\domain-guides\result-diagnosis.en.md`
+13. `D:\CSTapi\domain-guides\optimization-ml-data.en.md`
 
-1. Extract frequency, dimensions, materials, ports, boundaries, and target metrics.
-2. Build a parameter table; keep dimensions parameterized.
-3. Use `DesignEnvironment.new()` or `connect_to_any_or_new()`, then `new_mws()`.
-4. Store parameters with `StoreParameterWithDescription` or `StoreParameter`.
-5. Use `add_to_history()` for units, frequency range, background, boundaries, mesh, and monitors.
-6. Add components, materials, geometry, ports, and lumped elements.
-7. Add solver settings.
-8. Run `full_history_rebuild()`, falling back to `RebuildOnParametricChange(True, False)`.
-9. Save to a new `.cst` path.
+## Operating Rules
 
-### Modify An Existing Project
+1. Inspect the current project, parameters, result tree, or existing record before proposing changes.
+2. Prefer official CST references, installed macros, and repository examples over guesswork.
+3. Use `cst.interface` for live sessions and `cst.results` for saved result reads.
+4. Use `model3d.add_to_history()` for geometry, ports, boundaries, mesh, and solver setup.
+5. If a CST VBA/History command is unfamiliar, search the macro library and extract the smallest controllable snippet instead of batch-running full interactive macros as black boxes.
+6. Do not save the original project by default; destructive edits, structure deletion, long simulations, and optimization loops should use a copied project or job copy.
+7. Complex structure evolution must record `design_id`, `parent_design_id`, operations, metrics, logs, dataset versions, and surrogate versions.
+8. Only use APIs, method names, and parameter names confirmed in official docs, installed macros, or repository code.
+9. If an API detail is uncertain, verify it first instead of filling the gap with assumptions.
 
-1. Connect to CST and inspect `list_open_projects()`.
-2. If the user asks for live modification of an open project, reuse it via `get_open_project()`.
-3. Read original parameter values before writing.
-4. Write new values and rebuild.
-5. Follow the save policy: restore/no-save, save copy, or save original.
+## Decision Flow
 
-### Run Simulation
+- Connect/open CST: list existing sessions and open projects first; use `cst.closed_start` or equivalent scripts for cold start.
+- Modify parameters: read the original value, write the test value, rebuild, optionally pause for observation, restore by default, and do not save.
+- Modify geometry: create a design record, state the hypothesis, then apply the smallest History mutation.
+- Add/delete structures: specify target objects, materials, coordinate systems, boolean operations, and rollback strategy.
+- Read results: discover result-tree paths before reading S-parameters, farfield, efficiency, gain, logs, or exported tables.
+- Optimize or use ML: treat CST as the expensive ground-truth evaluator and record every trial input, output, project copy, log, and dataset version.
 
-1. Copy the `.cst` file and same-name project folder into a job directory.
-2. Remove stale `.lok` files from the copied project folder.
-3. Open the copied project, apply parameters, and rebuild.
-4. Use `model3d.run_solver()`, falling back to `RunSolver()`.
-5. Inspect `Result/Model.log`, `output.json`, and `outputDS.json`.
-6. Read metrics and write `metrics.json` or `trials.jsonl`.
+## Output Contract
 
-### Read Results
-
-1. Prefer `ProjectFile(path, allow_interactive=False)` for saved projects.
-2. Use `get_3d().get_tree_items()` to discover tree paths; do not hard-code paths first.
-3. Match `S-Parameters`, `Farfields`, `Efficiencies`, and other requested items.
-4. Use `get_result_item(treepath).get_xdata()` and `get_ydata()` for 1D curves.
-5. Report the metric source: live API, `cst.results`, exported text, or parsed logs.
-
-### Complex Antenna Structure Evolution
-
-1. Inspect current project structure, parameters, ports, boundaries, monitors, and existing results.
-2. Create `D0000_baseline`; record baseline project, structure summary, and metrics.
-3. Diagnose the main bottleneck from S-parameters, efficiency, gain, pattern, polarization, and logs.
-4. Generate the smallest structural mutation hypothesis, such as adding a slot, editing the feed, adding a parasitic element, editing ground, adding a short, or tuning array spacing.
-5. Apply the mutation in a copy with History/VBA; include `mutation_id` and `parent_design_id -> design_id` in the caption.
-6. Rebuild, simulate, or read results.
-7. Write `design.json`, `metrics.json`, and `trials.jsonl`.
-8. Decide whether to accept, reject, roll back, refine, optimize, or train a surrogate.
-
-## 6. Modeling And Simulation Command Pattern
-
-History helper:
-
-```python
-def add_history(project, caption, lines):
-    project.model3d.add_to_history(caption, "\n".join(lines) + "\n")
-```
-
-Minimal setup:
-
-```python
-add_history(project, "setup units boundary monitor", [
-    "With Units",
-    '    .SetUnit "Length", "mm"',
-    '    .SetUnit "Frequency", "GHz"',
-    "End With",
-    'Solver.FrequencyRange "fmin", "fmax"',
-    "With Boundary",
-    '    .Xmin "expanded open"',
-    '    .Xmax "expanded open"',
-    '    .Ymin "expanded open"',
-    '    .Ymax "expanded open"',
-    '    .Zmin "expanded open"',
-    '    .Zmax "expanded open"',
-    "End With",
-    "With Monitor",
-    "    .Reset",
-    '    .Name "farfield (f=fmon)"',
-    '    .Domain "Frequency"',
-    '    .FieldType "Farfield"',
-    '    .MonitorValue "fmon"',
-    "    .Create",
-    "End With",
-])
-```
-
-Brick example:
-
-```python
-add_history(project, "create patch", [
-    "With Brick",
-    "    .Reset",
-    '    .Name "patch"',
-    '    .Component "metal"',
-    '    .Material "PEC"',
-    '    .Xrange "-patch_w/2", "patch_w/2"',
-    '    .Yrange "-patch_l/2", "patch_l/2"',
-    '    .Zrange "0", "metal_t"',
-    "    .Create",
-    "End With",
-])
-```
-
-Discrete port example:
-
-```python
-add_history(project, "define port 1", [
-    "With DiscretePort",
-    "    .Reset",
-    '    .PortNumber "1"',
-    '    .Type "SParameter"',
-    '    .Impedance "50.0"',
-    '    .SetP1 "False", "feed_x", "-feed_gap/2", "0"',
-    '    .SetP2 "False", "feed_x", "feed_gap/2", "0"',
-    "    .Create",
-    "End With",
-])
-```
-
-Run solver:
-
-```python
-try:
-    project.model3d.full_history_rebuild()
-except Exception:
-    project.model3d.RebuildOnParametricChange(True, False)
-
-try:
-    project.model3d.run_solver()
-except Exception:
-    project.model3d.RunSolver()
-```
-
-## 7. Optimization And Deep Learning Loops
-
-- Parameter search: define variables, bounds, objective, constraints, and budget; copy and simulate each candidate; cache evaluated parameters.
-- Surrogate modeling: generate a CST dataset and train a model to predict S-parameters, bandwidth, gain, efficiency, or farfield scores.
-- Active learning: let the surrogate propose candidates, validate valuable samples in CST, append data, and retrain.
-- Inverse design: optimize on the surrogate first, then validate top-k designs in CST.
-- Write every trial to `trials.jsonl` with `trial_id`, `design_id`, `parent_design_id`, parameters, structure operations, metrics, status, errors, project path, and log path.
-- Write `dataset_summary.json` for every dataset version, including source trials, filters, features, targets, units, split seed, and sample counts.
-- Write `model_card.json` for every surrogate version, including `surrogate_version`, `dataset_version`, model type, training config, weight path, validation metrics, and applicability limits.
-- Do not save only model weights; without data version and training config, CST validation cannot be reproduced.
-
-## 8. Safety Rules
-
-- Do not save the user's original project by default.
-- Use copied projects for geometry deletion, overwrites, long simulations, and batch optimization unless explicitly requested otherwise.
-- Never recursively delete `pdfsrc`, junctions, symlinks, or external linked directories.
-- Do not infer CST is controllable from backend processes such as `cstd`; check `running_design_environments()`.
-- Do not confuse "read existing results" with "run a new simulation".
-- Do not hard-code result tree paths before discovering available tree items.
-- Do not reduce complex antenna design to fixed antenna-type templates; use structure evolution and result diagnosis loops.
-- Do not claim optimization is complete without `design_id`, `trial_id`, metric sources, and version records.
-
-## 9. Output Contract
-
-Every completed task should report:
+When finishing a CST task, report:
 
 ```yaml
 project_path: used or generated CST project
 save_policy: no_save | save_copy | save_original
 design_id: current structure version
 parent_design_id: previous structure version or null
-operations: list of parameter/modeling/simulation steps
-metrics: extracted values with source
+mcp_tools: MCP tools called during the task
+operations: parameter/modeling/simulation/result-reading steps
+metrics: extracted values with source paths
 logs: Model.log/output.json/outputDS.json paths
-artifacts: generated files, datasets, plots, manifests
+artifacts: generated files, datasets, plots, manifests, model cards
 versions: dataset_version, surrogate_version, CST project copy version
+source_macros: CST installed macro paths used as references or adapted sources
 warnings: assumptions, skipped steps, risks
 errors: failures and recovery attempts
 ```

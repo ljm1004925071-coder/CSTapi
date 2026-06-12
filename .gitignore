@@ -3,4 +3,7 @@ Desktop.ini
 *.log
 __pycache__/
 .pytest_cache/
-
+node_modules/
+design-records/
+scripts/
+skills/skill-creator/
